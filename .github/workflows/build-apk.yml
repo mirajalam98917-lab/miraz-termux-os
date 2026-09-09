@@ -40,9 +40,9 @@ jobs:
 
       - name: Build APK
         env:
-          ANDROID_ACCEPT_LICENSE: "y"
+          ANDROID_ACCEPT_LICENSE: ""
         run: |
-          yes | buildozer android debug
+           | buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
