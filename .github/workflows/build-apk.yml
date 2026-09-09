@@ -1,3 +1,5 @@
+cd ~/miraz-termux-os
+cat > .github/workflows/build-apk.yml <<'EOF'
 name: Build Miraz Termux OS APK
 
 on:
@@ -19,7 +21,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -40,17 +42,19 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           pip install buildozer cython
 
-      - name: Accept Android SDK licenses
+      - name: Prepare Buildozer Android SDK licenses
         run: |
-          SDKMANAGER="$HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager"
+          SDK="$HOME/.buildozer/android/platform/android-sdk"
 
-          if [ -f "$SDKMANAGER" ]; then
-            yes | "$SDKMANAGER" --licenses || true
-            "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0" "build-tools;37.0.0"
-          else
-            echo "Buildozer SDK not created yet."
-            echo "Buildozer will download/setup the Android SDK during the build."
-          fi
+          mkdir -p "$SDK/licenses"
+
+          cat > "$SDK/licenses/android-sdk-license" <<'LICENSE'
+          24333f8a63b6825ea9c5514f83c2829b004d1fee
+          84831b9409646a918e30573bab4c9c91346d8abd
+          d56f5187479451eabf01fb78af6dfcb131a6481e
+          LICENSE
+
+          echo "Android SDK license file prepared."
 
       - name: Build APK
         env:
@@ -59,12 +63,15 @@ jobs:
           buildozer -v android debug
 
       - name: Check APK
+        if: success()
         run: |
-          echo "APK files:"
+          echo "===== APK FILES ====="
           find bin -type f -name "*.apk" -ls
 
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: miraz-termux-os-apk
           path: bin/*.apk
+EOF
